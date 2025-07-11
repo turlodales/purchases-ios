@@ -34,6 +34,7 @@ class BaseBackendTests: TestCase {
     private(set) var internalAPI: InternalAPI!
     private(set) var customerCenterConfig: CustomerCenterConfigAPI!
     private(set) var redeemWebPurchaseAPI: RedeemWebPurchaseAPI!
+    private(set) var virtualCurrenciesAPI: VirtualCurrenciesAPI!
 
     static let apiKey = "asharedsecret"
     static let userID = "user"
@@ -45,7 +46,7 @@ class BaseBackendTests: TestCase {
     }
 
     final func createDependencies(dangerousSettings: DangerousSettings? = nil,
-                                  localesProvider: PreferredLocalesProviderType = MockPreferredLocalesProvider()) {
+                                  localesProvider: PreferredLocalesProvider = .mock()) {
         // Need to force StoreKit 1 because we use iOS 13 snapshots
         // for watchOS tests which contain StoreKit 1 headers
         #if os(watchOS)
@@ -88,6 +89,7 @@ class BaseBackendTests: TestCase {
         self.internalAPI = InternalAPI(backendConfig: backendConfig)
         self.customerCenterConfig = CustomerCenterConfigAPI(backendConfig: backendConfig)
         self.redeemWebPurchaseAPI = RedeemWebPurchaseAPI(backendConfig: backendConfig)
+        self.virtualCurrenciesAPI = VirtualCurrenciesAPI(backendConfig: backendConfig)
 
         self.backend = Backend(backendConfig: backendConfig,
                                customerAPI: customer,
@@ -96,7 +98,8 @@ class BaseBackendTests: TestCase {
                                offlineEntitlements: self.offlineEntitlements,
                                internalAPI: self.internalAPI,
                                customerCenterConfig: self.customerCenterConfig,
-                               redeemWebPurchaseAPI: self.redeemWebPurchaseAPI)
+                               redeemWebPurchaseAPI: self.redeemWebPurchaseAPI,
+                               virtualCurrenciesAPI: self.virtualCurrenciesAPI)
     }
 
     var verificationMode: Configuration.EntitlementVerificationMode {
@@ -170,20 +173,6 @@ final class MockStorefrontProvider: StorefrontProviderType {
         } else {
             return nil
         }
-    }
-
-}
-
-final class MockPreferredLocalesProvider: PreferredLocalesProviderType {
-
-    var preferredLanguages: [String] {
-        stubbedLocales
-    }
-
-    private let stubbedLocales: [String]
-
-    init(stubbedLocales: [String] = ["en_EN"]) {
-        self.stubbedLocales = stubbedLocales
     }
 
 }

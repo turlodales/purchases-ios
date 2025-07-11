@@ -135,18 +135,21 @@ import Foundation
             case transactionID = "transaction_id"
             case answerYes = "yes"
             case answerNo = "no"
-            case storeAppStore = "store_app_store"
-            case storeMacAppStore = "store_mac_app_store"
-            case storePlayStore = "store_google_play_store"
-            case storeStripe = "store_stripe"
-            case storePromotional = "store_promotional"
-            case storeAmazon = "store_amazon_store"
+            case storeAppStore = "app_store"
+            case storeMacAppStore = "mac_app_store"
+            case storePlayStore = "google_play_store"
+            case storeStripe = "stripe"
+            case storePromotional = "promotional"
+            case storeAmazon = "amazon_store"
             case cardStorePromotional = "card_store_promotional"
-            case storeExternal = "store_external"
-            case storeUnknownStore = "store_unknown"
+            case storeExternal = "external_store"
+            case storeUnknownStore = "unknown_store"
             case storePaddle = "store_paddle"
             case storeWeb = "store_web"
             case debugHeaderTitle = "Debug"
+            case seeAllVirtualCurrencies = "see_all_virtual_currencies"
+            case virtualCurrencyBalancesScreenHeader = "virtual_currency_balances_screen_header"
+            case noVirtualCurrencyBalancesFound = "no_virtual_currency_balances_found"
             case youMayHaveDuplicatedSubscriptionsTitle = "you_may_have_duplicated_subscriptions_title"
             case youMayHaveDuplicatedSubscriptionsSubtitle = "you_may_have_duplicated_subscriptions_subtitle"
             case pricePaid = "price_paid"
@@ -156,9 +159,10 @@ import Foundation
             case priceAfterwards = "price_afterwards"
             case freeTrialUntilDate = "free_trial_until_date"
             case priceExpiresOnDateWithoutChanges = "price_expires_on_date_without_changes"
+            case badgeLifetime = "badge_lifetime"
             case badgeCancelled = "badge_cancelled"
             case badgeTrialCancelled = "badge_free_trial_cancelled"
-            case badgeFreeTrial = "free_trial"
+            case badgeFreeTrial = "badge_free_trial"
             case refundSuccess = "refund_success"
             case actionsSectionTitle = "actions_section_title"
             case subscriptionsSectionTitle = "subscriptions_section_title"
@@ -354,6 +358,12 @@ import Foundation
                     return "Web"
                 case .debugHeaderTitle:
                     return "Debug"
+                case .virtualCurrencyBalancesScreenHeader:
+                    return "In-App Currencies"
+                case .seeAllVirtualCurrencies:
+                    return "See all in-app currencies"
+                case .noVirtualCurrencyBalancesFound:
+                    return "It doesn't look like you've purchased any in-app currencies."
                 case .youMayHaveDuplicatedSubscriptionsTitle:
                     return "You may have duplicated subscriptions"
                 case .youMayHaveDuplicatedSubscriptionsSubtitle:
@@ -373,6 +383,8 @@ import Foundation
                     return "Free trial until {{ date }}."
                 case .priceExpiresOnDateWithoutChanges:
                      return "{{ price }}. Expires on {{ date }} without changes."
+                case .badgeLifetime:
+                    return "Lifetime"
                 case .badgeCancelled:
                     return "Cancelled"
                 case .badgeFreeTrial:
@@ -642,17 +654,20 @@ import Foundation
         @_spi(Internal) public let email: String
         @_spi(Internal) public let shouldWarnCustomerToUpdate: Bool
         @_spi(Internal) public let displayPurchaseHistoryLink: Bool
+        @_spi(Internal) public let displayVirtualCurrencies: Bool
         @_spi(Internal) public let shouldWarnCustomersAboutMultipleSubscriptions: Bool
 
         @_spi(Internal) public init(
             email: String,
             shouldWarnCustomerToUpdate: Bool,
             displayPurchaseHistoryLink: Bool,
+            displayVirtualCurrencies: Bool,
             shouldWarnCustomersAboutMultipleSubscriptions: Bool
         ) {
             self.email = email
             self.shouldWarnCustomerToUpdate = shouldWarnCustomerToUpdate
             self.displayPurchaseHistoryLink = displayPurchaseHistoryLink
+            self.displayVirtualCurrencies = displayVirtualCurrencies
             self.shouldWarnCustomersAboutMultipleSubscriptions = shouldWarnCustomersAboutMultipleSubscriptions
         }
 
@@ -809,6 +824,7 @@ extension CustomerCenterConfigData.Support {
         self.email = response.email
         self.shouldWarnCustomerToUpdate = response.shouldWarnCustomerToUpdate ?? true
         self.displayPurchaseHistoryLink = response.displayPurchaseHistoryLink ?? false
+        self.displayVirtualCurrencies = response.displayVirtualCurrencies ?? false
         self.shouldWarnCustomersAboutMultipleSubscriptions = response.shouldWarnCustomersAboutMultipleSubscriptions
             ?? false
     }
