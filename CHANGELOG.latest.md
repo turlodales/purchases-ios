@@ -1,22 +1,22 @@
 ## RevenueCat SDK
+### 🐞 Bugfixes
+* Fix rendering of buttons in Mac Catalyst mode when optimized for Mac. (#5372) via Chris Lindsay (@clindsay3)
+* Update default height of paywalls when using .presentIfNeeded on Mac Catalyst to something that is more reasonable. (#5378) via Chris Lindsay (@clindsay3)
 ### Customer Center
 #### ✨ New Features
-* Use `card_store_promotional` for RC Promos in card & history (#5275) via Facundo Menzella (@facumenzella)
-* Refactor PurchaseHistory to use PurchaseInformation (#5260) via Facundo Menzella (@facumenzella)
-#### 🐞 Bugfixes
-* Add tests for PurchaseInformationView.Badge + rc promo (#5273) via Facundo Menzella (@facumenzella)
+* Add custom change plans support for customer center (#5379) via Facundo Menzella (@facumenzella)
 
 ### 🔄 Other Changes
-* [Paywalls] Update ImageComponent max width after initial layout if it changes. (#5291) via Mark Villacampa (@MarkVillacampa)
-* Fix index and mgiration guides docs not being updated (#5298) via Mark Villacampa (@MarkVillacampa)
-* Add .yield to `PaywallViewEventsFullscreenLightModeTests` (#5294) via Facundo Menzella (@facumenzella)
-* Add missing `@_spi` to import in backend tests (#5297) via Antonio Pallares (@ajpallares)
-* Use minimal permissions for installation tests (#5274) via JayShortway (@JayShortway)
-* [AUTOMATIC][Paywalls V2] Updates commit hash of paywall-preview-resources (#5295) via RevenueCat Git Bot (@RCGitBot)
-* [AUTOMATIC][Paywalls V2] Updates commit hash of paywall-preview-resources (#5289) via RevenueCat Git Bot (@RCGitBot)
-* Delete Examples folder from carthage checkout (#5287) via Facundo Menzella (@facumenzella)
-* Remove CustomerCenterConfigDataAPI from API Tests (#5286) via Facundo Menzella (@facumenzella)
-* Delete duplicate OfferingsList.swift from PaywallTester (#5249) via Facundo Menzella (@facumenzella)
-* Add abbrev to Gemfile (#5207) via Facundo Menzella (@facumenzella)
-* Test removing example apps before Carthage installation test (#5268) via Facundo Menzella (@facumenzella)
-* Add _spi(Internal) to Customer Center (#5270) via Facundo Menzella (@facumenzella)
+* Fix VirtualCurrencyBalancesScreen Preview on Catalyst (Optimized For Mac) (#5387) via Will Taylor (@fire-at-will)
+* Add `@_spi` to initializers of virtual currencies APIs (#5384) via Antonio Pallares (@ajpallares)
+* Use SwiftUI instead of UIKit to present an alert in Paywall Tester app (#5381) via Chris Lindsay (@clindsay3)
+* [AUTOMATIC][Paywalls V2] Updates commit hash of paywall-preview-resources (#5380) via RevenueCat Git Bot (@RCGitBot)
+* Add build configurations for tuist workspace (#5364) via Facundo Menzella (@facumenzella)
+* Adding deep link for testing in Paywalls Tester (#5238) via Josh Holtz (@joshdholtz)
+* Wait a max of 20 minutes for TestFlight processing (#5153) via Josh Holtz (@joshdholtz)
+* [AUTOMATIC][Paywalls V2] Updates commit hash of paywall-preview-resources (#5373) via RevenueCat Git Bot (@RCGitBot)
+* Generate Mac Catalyst screenshots of Paywall components to be sent to EmergeTools (#5303) via Chris Lindsay (@clindsay3)
+* Use a more accurate method for generating a screenshot of a UIView (#5352) via Chris Lindsay (@clindsay3)
+* Upload screenshots to Emerge in addition to pushing them to the paywall validation repo. (#5351) via Chris Lindsay (@clindsay3)
+* Add a few additional VC integration tests (#5367) via Will Taylor (@fire-at-will)
+* [CI] Use m1 instead of m2 executor (#5369) via Mark Villacampa (@MarkVillacampa)

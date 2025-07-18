@@ -34,13 +34,14 @@ class SystemInfo {
     }
 
     let storeKitVersion: StoreKitVersion
+    let apiKeyValidationResult: Configuration.APIKeyValidationResult
     let operationDispatcher: OperationDispatcher
     let platformFlavor: String
     let platformFlavorVersion: String?
     let responseVerificationMode: Signing.ResponseVerificationMode
     let dangerousSettings: DangerousSettings
     let clock: ClockType
-    let preferredLocalesProvider: PreferredLocalesProviderType
+    private let preferredLocalesProvider: PreferredLocalesProvider
 
     var finishTransactions: Bool {
         get { return self._finishTransactions.value }
@@ -85,12 +86,8 @@ class SystemInfo {
         return self.storefrontProvider.currentStorefront
     }
 
-    var preferredLanguages: [String] {
-        return self.preferredLocalesProvider.preferredLanguages
-    }
-
     static var frameworkVersion: String {
-        return "5.30.0-SNAPSHOT"
+        return "5.34.0-SNAPSHOT"
     }
 
     static var systemVersion: String {
@@ -164,11 +161,12 @@ class SystemInfo {
          sandboxEnvironmentDetector: SandboxEnvironmentDetector = BundleSandboxEnvironmentDetector.default,
          storefrontProvider: StorefrontProviderType = DefaultStorefrontProvider(),
          storeKitVersion: StoreKitVersion = .default,
+         apiKeyValidationResult: Configuration.APIKeyValidationResult = .validApplePlatform,
          responseVerificationMode: Signing.ResponseVerificationMode = .default,
          dangerousSettings: DangerousSettings? = nil,
          isAppBackgrounded: Bool? = nil,
          clock: ClockType = Clock.default,
-         preferredLocalesProvider: PreferredLocalesProviderType = PreferredLocalesProvider.default) {
+         preferredLocalesProvider: PreferredLocalesProvider) {
         self.platformFlavor = platformInfo?.flavor ?? "native"
         self.platformFlavorVersion = platformInfo?.version
         self._bundle = .init(bundle)
@@ -177,6 +175,7 @@ class SystemInfo {
         self._isAppBackgroundedState = .init(isAppBackgrounded ?? false)
         self.operationDispatcher = operationDispatcher
         self.storeKitVersion = storeKitVersion
+        self.apiKeyValidationResult = apiKeyValidationResult
         self.sandboxEnvironmentDetector = sandboxEnvironmentDetector
         self.storefrontProvider = storefrontProvider
         self.responseVerificationMode = responseVerificationMode
@@ -250,6 +249,21 @@ class SystemInfo {
         return host.contains("apple.com")
     }
 
+    /// Returns the preferred locales, including the locale override if set.
+    var preferredLocales: [String] {
+        return self.preferredLocalesProvider.preferredLocales
+    }
+
+    /// Developer-set preferred locale.
+    ///
+    /// `preferredLocales` already includes it if set, so this property is only useful for reading the override value.
+    var preferredLocaleOverride: String? {
+        return self.preferredLocalesProvider.preferredLocaleOverride
+    }
+
+    func overridePreferredLocale(_ locale: String?) {
+        self.preferredLocalesProvider.overridePreferredLocale(locale)
+    }
 }
 
 #if os(iOS) || VISION_OS
@@ -268,7 +282,6 @@ extension SystemInfo {
             return try scene.orThrow(ErrorUtils.storeProblemError(withMessage: "Failed to get UIWindowScene"))
         }
     }
-
 }
 #endif
 
@@ -293,10 +306,6 @@ extension SystemInfo {
     #elseif VISION_OS
     static let platformHeaderConstant = "visionOS"
     #endif
-
-}
-
-extension SystemInfo {
 
     static var applicationWillEnterForegroundNotification: Notification.Name {
         #if os(iOS) || os(tvOS) || VISION_OS
@@ -342,7 +351,6 @@ extension SystemInfo {
     var isAppExtension: Bool {
         return self.bundle.bundlePath.hasSuffix(".appex")
     }
-
 }
 
 private extension SystemInfo {
