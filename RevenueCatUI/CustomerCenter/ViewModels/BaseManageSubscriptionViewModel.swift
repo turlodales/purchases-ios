@@ -64,6 +64,9 @@ class BaseManageSubscriptionViewModel: ObservableObject {
     var purchaseInformation: PurchaseInformation?
 
     @Published
+    var showAllInAppCurrenciesScreen: Bool = false
+
+    @Published
     private(set) var refundRequestStatus: RefundRequestStatus?
 
     private var error: Error?
@@ -138,6 +141,10 @@ class BaseManageSubscriptionViewModel: ObservableObject {
         self.inAppBrowserURL = nil
     }
 
+    func displayAllInAppCurrenciesScreen() {
+        self.showAllInAppCurrenciesScreen = true
+    }
+
 #endif
 
 }
@@ -174,7 +181,10 @@ private extension BaseManageSubscriptionViewModel {
                 self.inAppBrowserURL = IdentifiableURL(url: url)
             }
 
-        case .changePlans, .cancel:
+        case .changePlans:
+            self.actionWrapper.handleAction(.showingChangePlans(purchaseInformation?.subscriptionGroupID))
+
+        case .cancel:
             self.actionWrapper.handleAction(.showingManageSubscriptions)
 
         case .customUrl:
@@ -200,6 +210,23 @@ private extension BaseManageSubscriptionViewModel {
     }
 #endif
 
+}
+
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS, unavailable)
+@available(tvOS, unavailable)
+@available(watchOS, unavailable)
+extension BaseManageSubscriptionViewModel {
+
+    var purchaseSubscriptionGroupID: String? {
+        purchaseInformation?.subscriptionGroupID
+    }
+
+    var changePlanProductIDs: [String] {
+        purchaseInformation?
+            .changePlan
+            .map { $0.products.map(\.productId) } ?? []
+    }
 }
 
 private extension CustomerCenterConfigData.Screen {
