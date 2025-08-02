@@ -120,7 +120,7 @@ public struct CustomerCenterView: View {
             }
             .onAppear {
 #if DEBUG
-                guard ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" else { return }
+                guard !ProcessInfo.isRunningForPreviews else { return }
 #endif
                 self.trackImpression()
             }
@@ -206,7 +206,8 @@ private extension CustomerCenterView {
             } else {
                 FallbackNoSubscriptionsView(
                     customerCenterViewModel: viewModel,
-                    actionWrapper: self.viewModel.actionWrapper
+                    actionWrapper: self.viewModel.actionWrapper,
+                    virtualCurrencies: self.viewModel.virtualCurrencies
                 )
             }
         }
@@ -225,8 +226,6 @@ private extension CustomerCenterView {
         RelevantPurchasesListView(
             customerInfoViewModel: viewModel,
             screen: screen,
-            originalAppUserId: viewModel.originalAppUserId,
-            originalPurchaseDate: viewModel.originalPurchaseDate,
             shouldShowSeeAllPurchases: viewModel.shouldShowSeeAllPurchases,
             purchasesProvider: self.viewModel.purchasesProvider,
             actionWrapper: self.viewModel.actionWrapper
@@ -241,6 +240,7 @@ private extension CustomerCenterView {
             purchaseInformation: viewModel.subscriptionsSection.first
                 ?? viewModel.nonSubscriptionsSection.first,
             showPurchaseHistory: viewModel.shouldShowSeeAllPurchases,
+            showVirtualCurrencies: viewModel.shouldShowVirtualCurrencies,
             allowsMissingPurchaseAction: true,
             purchasesProvider: self.viewModel.purchasesProvider,
             actionWrapper: self.viewModel.actionWrapper
@@ -266,7 +266,7 @@ struct CustomerCenterView_Previews: PreviewProvider {
     static var previews: some View {
         CustomerCenterView(
             viewModel: CustomerCenterViewModel(
-                activeSubscriptionPurchases: [.monthlyRenewing],
+                activeSubscriptionPurchases: [.subscription],
                 activeNonSubscriptionPurchases: [],
                 configuration: CustomerCenterConfigData.default
             )

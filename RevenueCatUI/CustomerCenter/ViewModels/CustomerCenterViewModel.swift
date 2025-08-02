@@ -35,10 +35,16 @@ import Foundation
     private(set) var appIsLatestVersion: Bool = defaultAppIsLatestVersion
 
     @Published
+    private(set) var virtualCurrencies: VirtualCurrencies?
+
+    @Published
     private(set) var onUpdateAppClick: (() -> Void)?
 
     @Published
     var manageSubscriptionsSheet = false
+
+    @Published
+    var changePlansSheet = false
 
     @Published
     var state: CustomerCenterViewState {
@@ -88,7 +94,7 @@ import Foundation
         subscriptionsSection.count + nonSubscriptionsSection.count > 1
     }
 
-    var  originalAppUserId: String {
+    var originalAppUserId: String {
         customerInfo?.originalAppUserId ?? ""
     }
 
@@ -101,6 +107,10 @@ import Foundation
         && customerInfo?.shouldShowSeeAllPurchasesButton(
             maxNonSubscriptions: RelevantPurchasesListViewModel.maxNonSubscriptionsToShow
         ) ?? false
+    }
+
+    var shouldShowVirtualCurrencies: Bool {
+        configuration?.support.displayVirtualCurrencies == true
     }
 
     private let currentVersionFetcher: CurrentVersionFetcher
@@ -154,11 +164,13 @@ import Foundation
     convenience init(
         activeSubscriptionPurchases: [PurchaseInformation],
         activeNonSubscriptionPurchases: [PurchaseInformation],
+        virtualCurrencies: VirtualCurrencies? = nil,
         configuration: CustomerCenterConfigData
     ) {
         self.init(actionWrapper: CustomerCenterActionWrapper(legacyActionHandler: nil))
         self.subscriptionsSection = activeSubscriptionPurchases
         self.nonSubscriptionsSection = activeNonSubscriptionPurchases
+        self.virtualCurrencies = virtualCurrencies
         self.configuration = configuration
         self.state = .success
     }
@@ -185,8 +197,15 @@ import Foundation
             try await self.purchasesProvider.syncPurchases() :
             try await purchasesProvider.customerInfo(fetchPolicy: .fetchCurrent)
 
-            try await self.loadPurchases(customerInfo: customerInfo)
-            try await self.loadCustomerCenterConfig()
+            let configuration = try await self.loadCustomerCenterConfig()
+            try await self.loadPurchases(customerInfo: customerInfo, changePlans: configuration.changePlans)
+
+            if shouldShowVirtualCurrencies {
+                purchasesProvider.invalidateVirtualCurrenciesCache()
+                self.virtualCurrencies = try? await purchasesProvider.virtualCurrencies()
+            } else {
+                self.virtualCurrencies = nil
+            }
             self.state = .success
         } catch {
             self.state = .error(error)
@@ -221,7 +240,7 @@ import Foundation
 @available(watchOS, unavailable)
 private extension CustomerCenterViewModel {
 
-    func loadPurchases(customerInfo: CustomerInfo) async throws {
+    func loadPurchases(customerInfo: CustomerInfo, changePlans: [CustomerCenterConfigData.ChangePlan]) async throws {
         self.customerInfo = customerInfo
 
         let hasActiveProducts =  !customerInfo.activeSubscriptions.isEmpty || !customerInfo.nonSubscriptions.isEmpty
@@ -233,7 +252,7 @@ private extension CustomerCenterViewModel {
             return
         }
 
-        await loadSubscriptionsSection(customerInfo: customerInfo)
+        await loadSubscriptionsSection(customerInfo: customerInfo, changePlans: changePlans)
         await loadNonSubscriptionsSection(customerInfo: customerInfo)
     }
 
@@ -245,6 +264,7 @@ private extension CustomerCenterViewModel {
                 transaction: subscription,
                 customerInfo: customerInfo,
                 purchasesProvider: purchasesProvider,
+                changePlans: [],
                 customerCenterStoreKitUtilities: customerCenterStoreKitUtilities
             )
             activeNonSubscriptionPurchases.append(purchaseInfo)
@@ -281,28 +301,39 @@ private extension CustomerCenterViewModel {
             transaction: inactiveSub,
             customerInfo: customerInfo,
             purchasesProvider: purchasesProvider,
+            changePlans: [],
             customerCenterStoreKitUtilities: customerCenterStoreKitUtilities
         )
 
         self.subscriptionsSection = [purchaseInfo]
     }
 
-    func loadSubscriptionsSection(customerInfo: CustomerInfo) async {
+    func loadSubscriptionsSection(
+        customerInfo: CustomerInfo,
+        changePlans: [CustomerCenterConfigData.ChangePlan]
+    ) async {
         var activeSubscriptionPurchases: [PurchaseInformation] = []
-        for subscription in customerInfo.activeSubscriptions
-            .compactMap({ id in customerInfo.subscriptionsByProductIdentifier[id] })
+        let subscriptions = customerInfo.activeSubscriptions
+            .compactMap({ id in
+                // Do the opposite as CustomerInfo.extractProductIDAndBasePlan for non-apple products
+                let idWithoutBasePlan = id.split(separator: ":").first.map { id in String(id) } ?? id
+                return customerInfo.subscriptionsByProductIdentifier[idWithoutBasePlan]
+                    ?? customerInfo.subscriptionsByProductIdentifier[id] // fallback in case it fails
+            })
             .sorted(by: {
                 guard let date1 = $0.expiresDate, let date2 = $1.expiresDate else {
                     return $0.expiresDate != nil
                 }
 
                 return date1 < date2
-            }) {
+            })
 
+        for subscription in subscriptions {
             let purchaseInfo: PurchaseInformation = await .from(
                 transaction: subscription,
                 customerInfo: customerInfo,
                 purchasesProvider: purchasesProvider,
+                changePlans: changePlans,
                 customerCenterStoreKitUtilities: customerCenterStoreKitUtilities
             )
 
@@ -316,15 +347,22 @@ private extension CustomerCenterViewModel {
         }
     }
 
-    func loadCustomerCenterConfig() async throws {
-        self.configuration = try await purchasesProvider.loadCustomerCenter()
-        if let productId = configuration?.productId,
+    func loadCustomerCenterConfig() async throws -> CustomerCenterConfigData {
+        let configuration = try await purchasesProvider.loadCustomerCenter()
+
+        defer {
+            self.configuration = configuration
+        }
+
+        if let productId = configuration.productId,
             let url = URL(string: "https://itunes.apple.com/app/id\(productId)") {
             self.onUpdateAppClick = {
                 // productId is a positive integer, so it should be safe to construct a URL from it.
                 URLUtilities.openURLIfNotAppExtension(url)
             }
         }
+
+        return configuration
     }
 }
 
